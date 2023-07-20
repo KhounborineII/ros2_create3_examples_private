@@ -29,6 +29,7 @@ class SonarBot1(runner.HdxNode):
         self.stop.linear.x = 0.0
         self.ir_clear_count = 0
         self.irs = set()
+        self.publisher.publish(self.stop)
 
     def timer_callback(self):
         self.record_first_callback()
