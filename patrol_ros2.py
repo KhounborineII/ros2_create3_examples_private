@@ -38,7 +38,7 @@ class SonarBot1(runner.HdxNode):
             self.quit()
             
     def ir_callback(self, msg):
-        print(f"IR callback at {self.elapsed_time()}")
+        # print(f"IR callback at {self.elapsed_time()}")
         for reading in msg.readings:
             det = reading.header.frame_id
             val = reading.value
@@ -53,6 +53,8 @@ class SonarBot1(runner.HdxNode):
         for reading in msg.readings:
             loc = reading.pose.pose.position.y
             dir = reading.pose.pose.orientation.z
+            print(f"position: {loc}")
+            print(f"orientation: {dir}")
             if loc > 1500.0:
                 while dir > -0.8:
                     self.publisher.publish(self.turn_left)
