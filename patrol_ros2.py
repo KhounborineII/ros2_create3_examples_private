@@ -13,6 +13,7 @@ class SonarBot1(runner.HdxNode):
     def __init__(self, namespace: str = ""):
         super().__init__('wheel_publisher')
         self.publisher = self.create_publisher(Twist, namespace + '/cmd_vel', 10)
+        self.repub = self.create_publisher(Twist, namespace + '/odom', 10)
         self.buttons = self.create_subscription(InterfaceButtons, namespace + '/interface_buttons', self.button_callback, qos_profile_sensor_data)
         self.subscription = self.create_subscription(IrIntensityVector, namespace + '/ir_intensity', self.ir_callback, qos_profile_sensor_data)
         self.location = self.create_subscription(Odometry, namespace + '/odom', self.odom_callback, qos_profile_sensor_data)
@@ -29,7 +30,7 @@ class SonarBot1(runner.HdxNode):
         self.stop.linear.x = 0.0
         self.ir_clear_count = 0
         self.irs = set()
-        self.publisher.publish(self.stop)
+        self.repub.publish(self.stop)
 
     def timer_callback(self):
         self.record_first_callback()
