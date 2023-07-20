@@ -37,17 +37,17 @@ class SonarBot1(runner.HdxNode):
         if msg.button_1.is_pressed or msg.button_2.is_pressed or msg.button_power.is_pressed:
             self.quit()
             
-    #def ir_callback(self, msg):
+    def ir_callback(self, msg):
         # print(f"IR callback at {self.elapsed_time()}")
-    #    for reading in msg.readings:
-    #        det = reading.header.frame_id
-    #        val = reading.value
-    #         if det != "base_link":
-    #            self.ir_check(det, val)
+        for reading in msg.readings:
+            det = reading.header.frame_id
+            val = reading.value
+            #if det != "base_link":
+            #    self.ir_check(det, val)
 
-    #def ir_check(self, sensor: str = "", val: int = 0):
-    #    if val > 100:
-    #        self.publisher.publish(self.stop) 
+    def ir_check(self, sensor: str = "", val: int = 0):
+        if val > 100:
+            self.publisher.publish(self.stop) 
 
     def odom_callback(self, msg):
         loc = msg.pose.pose.position.y
