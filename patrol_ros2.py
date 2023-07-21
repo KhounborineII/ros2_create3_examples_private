@@ -73,7 +73,7 @@ class SonarBot1(runner.HdxNode):
                 self.publisher.publish(self.forward)
         elif act_loc < 0.0:
             self.publisher.publish(self.turn_right)
-            if act_dir > 0.2:
+            if act_dir > 0.07:
                 self.publisher.publish(self.forward)
         else:
             if self.ir_sense:
