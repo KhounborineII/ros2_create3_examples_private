@@ -47,10 +47,15 @@ class SonarBot1(runner.HdxNode):
             val = reading.value
             if det != "base_link":
                 self.ir_check(det, val)
+        if self.ir_clear_count == 7:
+            self.ir_sense = True
+        self.ir_clear_count = 0
 
     def ir_check(self, sensor: str = "", val: int = 0):
         if val > 100:
             self.ir_sense = False
+        else:
+            self.ir_clear_count += 1
 
     def odom_callback(self, msg):
         loc = msg.pose.pose.position.y
