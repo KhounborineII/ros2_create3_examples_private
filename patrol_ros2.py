@@ -13,10 +13,9 @@ class SonarBot1(runner.HdxNode):
     def __init__(self, namespace: str = ""):
         super().__init__('wheel_publisher')
         self.publisher = self.create_publisher(Twist, namespace + '/cmd_vel', 10)
-        self.repub = self.create_publisher(Twist, namespace + '/odom', 10)
         self.buttons = self.create_subscription(InterfaceButtons, namespace + '/interface_buttons', self.button_callback, qos_profile_sensor_data)
         self.subscription = self.create_subscription(IrIntensityVector, namespace + '/ir_intensity', self.ir_callback, qos_profile_sensor_data)
-        #self.location = self.create_subscription(Odometry, namespace + '/odom', self.odom_callback, qos_profile_sensor_data)
+        self.location = self.create_subscription(Odometry, namespace + '/odom', self.odom_callback, qos_profile_sensor_data)
         timer_period = 0.25 # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
         # Required for "Type Anything to Quit" from runner.py"
@@ -30,7 +29,9 @@ class SonarBot1(runner.HdxNode):
         self.stop.linear.x = 0.0
         self.ir_clear_count = 0
         self.irs = set()
-        self.repub.publish(self.stop)
+        self.true_loc = 0.0
+        self.true_dir = 0.0
+        self.ir_sense = True
 
     def timer_callback(self):
         self.record_first_callback()
@@ -44,24 +45,33 @@ class SonarBot1(runner.HdxNode):
         for reading in msg.readings:
             det = reading.header.frame_id
             val = reading.value
-            #if det != "base_link":
-            #    self.ir_check(det, val)
+            if det != "base_link":
+                self.ir_check(det, val)
 
     def ir_check(self, sensor: str = "", val: int = 0):
         if val > 100:
-            self.publisher.publish(self.stop) 
+            self.ir_sense = False
 
     def odom_callback(self, msg):
         loc = msg.pose.pose.position.y
         dir = msg.pose.pose.orientation.z
-        print(f"y position: {loc}")
-        print(f"orientation: {dir}")
-        if loc > 2.5 and dir > -1.5:
+        if self.true_loc == 0.0 and self.true_dir == 0.0:
+            self.true_loc = loc
+            self.true_dir = dir
+        act_loc = loc - self.true_loc
+        act_dir = dir - self.true_dir
+        print(f"position: {act_loc}")
+        print(f"orientation: {act_dir}")
+        if act_loc > 2.5 and act_dir > 0.5:
             self.publisher.publish(self.turn_left)
-        elif loc < 0.0 and dir < 0.5:
+        elif act_loc < 0.0 and act_dir < 0.5:
             self.publisher.publish(self.turn_left)
         else:
-            self.publisher.publish(self.forward)
+            if self.ir_sense:
+                self.publisher.publish(self.forward)
+            else:
+                self.publisher.publish(self.stop)
+        
 
 
 if __name__ == '__main__':
