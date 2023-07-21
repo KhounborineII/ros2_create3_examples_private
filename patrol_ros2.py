@@ -52,11 +52,9 @@ class SonarBot1(runner.HdxNode):
     def odom_callback(self, msg):
         loc = msg.pose.pose.position.y
         dir = msg.pose.pose.orientation.z
-        xloc = msg.pose.pose.position.x
-        print(f"x position: {xloc}")
         print(f"y position: {loc}")
         print(f"orientation: {dir}")
-        if loc > 0.5 and dir > -0.8:
+        if loc > 2.5 and dir > -1.5:
             self.publisher.publish(self.turn_left)
         elif loc < 0.0 and dir < 0.5:
             self.publisher.publish(self.turn_left)
