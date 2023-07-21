@@ -62,9 +62,9 @@ class SonarBot1(runner.HdxNode):
         act_dir = dir - self.true_dir
         print(f"position: {act_loc}")
         print(f"orientation: {act_dir}")
-        if act_loc > 2.5 and act_dir > 0.5:
+        if act_loc > 1.5 and act_dir > 0.0:
             self.publisher.publish(self.turn_left)
-        elif act_loc < 0.0 and act_dir < 0.5:
+        elif act_loc < 0.0 and act_dir < 0.0:
             self.publisher.publish(self.turn_left)
         else:
             if self.ir_sense:
