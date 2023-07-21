@@ -64,14 +64,14 @@ class SonarBot1(runner.HdxNode):
         if act_loc > 1.5:
             if self.true_dir == 0.0:
                 self.true_dir = dir
-            if dir - self.true_dir < 1.5:
+            if dir - self.true_dir < 0.5:
                 self.publisher.publish(self.turn_left)
             else:
                 self.publisher.publish(self.forward)
         elif act_loc < 0.0:
             if self.true_dir == 0.0:
                 self.true_dir = dir
-            if dir - self.true_dir < 1.5:
+            if dir - self.true_dir < 0.5:
                 self.publisher.publish(self.turn_left)
             else:
                 self.publisher.publish(self.forward)
