@@ -31,14 +31,12 @@ class PatrollerBot(runner.HdxNode):
         act_loc = loc - self.true_loc
         print(f"position: {act_loc}")
         if act_loc > 1.0 or act_loc < 0.0:
-            self.publisher.publish(runner.straight_twist(0.0))
+             goal = math.pi
+             print("Starting turn", goal)
+             self.rotator.send_goal(goal)
+             rclpy.spin_once(self.rotator)
         elif act_loc < 1.0 and act_loc > 0.0:
             self.publisher.publish(runner.straight_twist(0.5))
-        elif self.wheels_stopped():
-            goal = math.pi
-            print("Starting turn", goal)
-            self.rotator.send_goal(goal)
-            rclpy.spin_once(self.rotator)
         else:
             print("waiting on wheels")
 
