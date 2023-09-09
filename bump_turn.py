@@ -16,10 +16,11 @@ class PatrollerBot(runner.HdxNode):
         self.publisher = self.create_publisher(Twist, namespace + '/cmd_vel', 10)
         self.wheel_status = self.create_subscription(WheelStatus, f'{namespace}/wheel_status', self.wheel_status_callback, qos_profile_sensor_data)
         self.location = self.create_subscription(Odometry, namespace + '/odom', self.odom_callback, qos_profile_sensor_data)
-        self.bump = None
         self.last_wheel_status = None
         self.rotator = RotateActionClient(self.turn_finished_callback, namespace)
         self.true_loc = 0.0
+        self.wheel_turn = False
+        self.spin_wheel = False
 
     def wheels_stopped(self):
         return self.last_wheel_status is not None and self.last_wheel_status.current_ma_left == 0 and self.last_wheel_status.current_ma_right == 0
@@ -30,18 +31,29 @@ class PatrollerBot(runner.HdxNode):
             self.true_loc = loc
         act_loc = loc - self.true_loc
         print(f"position: {act_loc}")
-        if act_loc > 1.0 or act_loc < 0.0:
-             goal = math.pi
-             print("Starting turn", goal)
-             self.rotator.send_goal(goal)
-             rclpy.spin_once(self.rotator)
-        elif act_loc < 1.0 and act_loc > 0.0:
-            self.publisher.publish(runner.straight_twist(0.5))
+        if not self.wheel_turn:
+            if act_loc > 1.0 or act_loc < 0.0:
+                self.publisher.publish(runner.straight_twist(0.0))
+                self.wheel_turn = True
+            elif act_loc < 1.0 and act_loc > 0.0:
+                self.publisher.publish(runner.straight_twist(0.5))
+            else:
+                print("waiting on wheels")
         else:
-            print("waiting on wheels")
+            if not self.spin_wheel:
+                goal = math.pi
+                print("Starting turn", goal)
+                self.rotator.send_goal(goal)
+                rclpy.spin_once(self.rotator)
+            elif self.spin_wheel:
+                self.publisher.publish(runner.straight_twist(0.5))
+            if act_loc < 1.0 and act_loc > 0.0:
+                self.wheel_turn = False
+                self.spin_wheel = False
+            
 
     def turn_finished_callback(self, future):
-        self.bump = None
+        self.spin_wheel = True
         print("finished with turn")
 
     def wheel_status_callback(self, msg):
