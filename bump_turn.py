@@ -14,7 +14,6 @@ class PatrollerBot(runner.HdxNode):
     def __init__(self, namespace: str = ""):
         super().__init__('patrol_bot')
         self.publisher = self.create_publisher(Twist, namespace + '/cmd_vel', 10)
-        self.bumps = self.create_subscription(HazardDetectionVector, f"{namespace}/hazard_detection", self.bump_callback, qos_profile_sensor_data)
         self.wheel_status = self.create_subscription(WheelStatus, f'{namespace}/wheel_status', self.wheel_status_callback, qos_profile_sensor_data)
         self.location = self.create_subscription(Odometry, namespace + '/odom', self.odom_callback, qos_profile_sensor_data)
         self.bump = None
@@ -33,6 +32,8 @@ class PatrollerBot(runner.HdxNode):
         print(f"position: {act_loc}")
         if act_loc > 1.0 or act_loc < 0.0:
             self.publisher.publish(runner.straight_twist(0.0))
+        elif act_loc < 1.0 and act_loc > 0.0:
+            self.publisher.publish(runner.straight_twist(0.5))
         elif self.wheels_stopped():
             goal = math.pi
             print("Starting turn", goal)
