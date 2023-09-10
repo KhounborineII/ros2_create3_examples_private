@@ -55,10 +55,11 @@ class PatrollerBot(runner.HdxNode):
             if act_loc > 1.0 or act_loc < 0.0:
                 self.publisher.publish(runner.straight_twist(0.0))
                 self.wheel_turn = True
-            elif act_loc <= 1.0 and act_loc >= 0.0:
-                self.publisher.publish(runner.straight_twist(0.5))
             elif not self.ir_sense:
                 self.publisher.publish(runner.straight_twist(0.0))
+            elif act_loc <= 1.0 and act_loc >= 0.0:
+                self.publisher.publish(runner.straight_twist(0.5))
+            
         else:
             if not self.spin_wheel:
                 goal = math.pi
