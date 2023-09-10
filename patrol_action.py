@@ -1,9 +1,10 @@
 import sys
 import math
 import runner
+import time
 import rclpy
-from irobot_create_msgs.msg import HazardDetectionVector, WheelStatus, WheelTicks
 from rclpy.qos import qos_profile_sensor_data
+from irobot_create_msgs.msg import IrIntensityVector
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 from action_demo import RotateActionClient
@@ -14,13 +15,35 @@ class PatrollerBot(runner.HdxNode):
         super().__init__('patrol_bot')
         self.publisher = self.create_publisher(Twist, namespace + '/cmd_vel', 10)
         self.location = self.create_subscription(Odometry, namespace + '/odom', self.odom_callback, qos_profile_sensor_data)
+        self.subscription = self.create_subscription(IrIntensityVector, namespace + '/ir_intensity', self.ir_callback, qos_profile_sensor_data)
         self.rotator = RotateActionClient(self.turn_finished_callback, namespace)
+        timer_period = 0.25 # seconds
+        self.timer = self.create_timer(timer_period, self.timer_callback)
+        # Timer Required for "Type Anything to Quit" from runner.py"
         self.true_loc = 0.0
         self.wheel_turn = False
         self.spin_wheel = False
+        self.ir_clear_count = 0
+        self.ir_sense = True
 
-    def wheels_stopped(self):
-        return self.last_wheel_status is not None and self.last_wheel_status.current_ma_left == 0 and self.last_wheel_status.current_ma_right == 0
+    def timer_callback(self):
+        self.record_first_callback()
+
+    def ir_callback(self, msg):
+        for reading in msg.readings:
+            det = reading.header.frame_id
+            val = reading.value
+            if det != "base_link":
+                self.ir_check(det, val)
+        if self.ir_clear_count == 7:
+            self.ir_sense = True
+        self.ir_clear_count = 0
+
+    def ir_check(self, sensor: str = "", val: int = 0):
+        if val > 100:
+            self.ir_sense = False
+        else:
+            self.ir_clear_count += 1
 
     def odom_callback(self, msg):
         loc = msg.pose.pose.position.y
@@ -34,8 +57,8 @@ class PatrollerBot(runner.HdxNode):
                 self.wheel_turn = True
             elif act_loc <= 1.0 and act_loc >= 0.0:
                 self.publisher.publish(runner.straight_twist(0.5))
-            else:
-                print("waiting on wheels")
+            elif not self.ir_sense:
+                self.publisher.publish(runner.straight_twist(0.0))
         else:
             if not self.spin_wheel:
                 goal = math.pi
